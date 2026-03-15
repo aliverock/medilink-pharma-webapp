@@ -1,210 +1,240 @@
-/*--------------------------
-    Project Name: Prachin
-    Version: 1.0
----------------------------*/
+/* ============================================================
+   Prachin Pharmachem — main.js
+   Vanilla JS: navigation, hero slider, counters, interactions
+   ============================================================ */
 
-$(function () {
-  "use strict";
+'use strict';
 
-  var $win = $(window);
+/* ── DOM Ready Helper ────────────────────────────────────── */
+function ready(fn) {
+  if (document.readyState !== 'loading') fn();
+  else document.addEventListener('DOMContentLoaded', fn);
+}
 
-  /*========== Pre Loading ==========*/
-  setTimeout(function () {
-    $(".preloader").fadeOut(500, function () {
-      $(this).remove();
-    });
-  });
-
-  /*========== Mobile Menu ==========*/
-  $(document).ready(function () {
-    var $navbarCollapse = $(".navbar-collapse");
-    var $mobileMenu = $(".navbar-nav");
-    var $navbarToggler = $(".navbar-toggler");
-    var $hasDropdown = $(".has-dropdown");
-
-    $(document).on("click", function (e) {
-      if (
-        !$(e.target).closest(".navbar").length &&
-        $navbarCollapse.hasClass("menu-opened")
-      ) {
-        $navbarCollapse.removeClass("menu-opened");
-        $mobileMenu.removeClass("menu-opened");
-        $navbarToggler.removeClass("actived");
-      }
-    });
-
-    if ($(window).width() >= 1236) {
-      $hasDropdown.hover(
-        function () {
-          $(this).find(".mega-dropdown-menu").addClass("show");
-        },
-        function () {
-          $(this).find(".mega-dropdown-menu").removeClass("show");
-        }
-      );
-    } else {
-      $hasDropdown.on("click", function (e) {
-        e.preventDefault();
-        $(this).find(".mega-dropdown-menu").toggleClass("show");
-      });
-    }
-  });
-
-  /*========== Sticky Navbar ==========*/
-  $win.on("scroll", function () {
-    var $stickyNavbar = $(".sticky-navbar");
-
-    if ($win.scrollTop() > 150) {
-      $stickyNavbar.addClass("is-sticky");
-    } else {
-      $stickyNavbar.removeClass("is-sticky");
-    }
-  });
-
-  /*========== Scroll Top Button ==========*/
-  var $scrollTopBtn = $("#scrollTopBtn");
-
-  $win.on("scroll", function () {
-    if ($(this).scrollTop() > 700) {
-      $scrollTopBtn.addClass("actived");
-    } else {
-      $scrollTopBtn.removeClass("actived");
-    }
-  });
-
-  $scrollTopBtn.on("click", function () {
-    $("html, body").animate(
-      {
-        scrollTop: 0,
-      },
-      500
-    );
-  });
-
-  /*========== Background Image ==========*/
-  $(".bg-img").each(function () {
-    var imgSrc = $(this).children("img").attr("src");
-
-    $(this)
-      .parent()
-      .css({
-        "background-image": "url(" + imgSrc + ")",
-        "background-size": "cover",
-        "background-position": "center",
-      });
-
-    $(this).parent().addClass("bg-img");
-
-    $(this).remove();
-  });
-
-  /*========== Accordion ==========*/
-  $(".accordion-header").on("click", function () {
-    $(this).parent(".accordion-item").toggleClass("opened");
-    $(this).parent(".accordion-item").siblings().removeClass("opened");
-  });
-
-  /*========== Slick Carousel ==========*/
-  setTimeout(function () {
-    $(".slick-carousel").slick({
-      arrows: true,
-      prevArrow:
-        '<button type="button" class="slick-prev"><i class="icon-arrow-left"></i></button>',
-      nextArrow:
-        '<button type="button" class="slick-next"><i class="icon-arrow-right"></i></button>',
-      dots: false,
-    });
-
-    $(".slider-has-navs").slick({
-      autoplay: true,
-      autoplaySpeed: 5000,
-      slidesToShow: 1,
-      arrows: true,
-      asNavFor: ".slider-nav-thumbnails",
-    });
-
-    $(".slider-nav-thumbnails").slick({
-      autoplay: true,
-      slidesToShow: 2,
-      asNavFor: ".slider-has-navs",
-      focusOnSelect: true,
-      variableWidth: true,
-    });
-  }, 500);
-
-  /*========== Popup Video ==========*/
-  $(".popup-video").magnificPopup({
-    type: "iframe",
-    mainClass: "mfp-fade",
-  });
-
-  /*========== NiceSelect ==========*/
-  $("select").niceSelect();
-
-  /*========== Counter ==========*/
-  $(".counter").counterUp({
-    delay: 10,
-    time: 4000,
-  });
+ready(function () {
+  initHeader();
+  initMobileNav();
+  initHeroSlider();
+  initCounters();
+  initBackToTop();
+  initProductFilter();
+  initContactForm();
+  initScrollAnimations();
 });
 
+/* ================================================================
+   HEADER — sticky + scroll class
+================================================================ */
+function initHeader() {
+  const header = document.getElementById('site-header');
+  if (!header) return;
 
-/* =================================
-   FIXED HEADER INITIALIZATION
-================================= */
+  window.addEventListener('scroll', () => {
+    header.classList.toggle('scrolled', window.scrollY > 60);
+  }, { passive: true });
+}
 
-document.addEventListener("DOMContentLoaded", function () {
-  initializeMegaMenu();
-});
+/* ================================================================
+   MOBILE NAVIGATION
+================================================================ */
+function initMobileNav() {
+  const toggle  = document.querySelector('.nav-toggle');
+  const nav     = document.querySelector('.main-nav');
+  const cta     = document.querySelector('.header-cta');
+  if (!toggle || !nav) return;
 
+  toggle.addEventListener('click', () => {
+    const open = toggle.classList.toggle('open');
+    nav.classList.toggle('open', open);
+    if (cta) cta.classList.toggle('open', open);
+    toggle.setAttribute('aria-expanded', open);
+  });
 
-function initializeMegaMenu() {
+  // Close when a nav link is clicked (mobile)
+  nav.querySelectorAll('.nav-link, .dropdown-item').forEach(link => {
+    link.addEventListener('click', () => {
+      toggle.classList.remove('open');
+      nav.classList.remove('open');
+      if (cta) cta.classList.remove('open');
+    });
+  });
 
-  const categoryItems = document.querySelectorAll(".category-item");
-  const productLists = document.querySelectorAll(".product-list");
-  const dropdownToggles = document.querySelectorAll(".dropdown-toggle");
+  // Close on outside click
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#site-header')) {
+      toggle.classList.remove('open');
+      nav.classList.remove('open');
+      if (cta) cta.classList.remove('open');
+    }
+  });
+}
 
-  if (productLists.length > 0) {
-    productLists[0].classList.add("active");
-    if(categoryItems[0]) categoryItems[0].classList.add("active");
+/* ================================================================
+   HERO SLIDER
+================================================================ */
+function initHeroSlider() {
+  const slides = document.querySelectorAll('.hero-slide');
+  const dots   = document.querySelectorAll('.slider-dot');
+  if (!slides.length) return;
+
+  let current   = 0;
+  let timer     = null;
+  const DELAY   = 5500;
+
+  function showSlide(idx) {
+    slides[current].classList.remove('active');
+    if (dots[current]) dots[current].classList.remove('active');
+    current = (idx + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    if (dots[current]) dots[current].classList.add('active');
   }
 
-  categoryItems.forEach((item) => {
+  function autoPlay() {
+    timer = setInterval(() => showSlide(current + 1), DELAY);
+  }
 
-    item.addEventListener("click", function(e){
+  dots.forEach((dot, i) => {
+    dot.addEventListener('click', () => {
+      clearInterval(timer);
+      showSlide(i);
+      autoPlay();
+    });
+  });
 
-      e.preventDefault();
+  showSlide(0);
+  autoPlay();
+}
 
-      const targetId = this.getAttribute("data-target");
+/* ================================================================
+   ANIMATED COUNTERS
+================================================================ */
+function initCounters() {
+  const counters = document.querySelectorAll('[data-count]');
+  if (!counters.length) return;
 
-      categoryItems.forEach(i => i.classList.remove("active"));
-      this.classList.add("active");
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const el     = entry.target;
+      const target = parseInt(el.dataset.count, 10);
+      const suffix = el.dataset.suffix || '';
+      const dur    = 2000;
+      const step   = 16;
+      const inc    = target / (dur / step);
+      let val      = 0;
 
-      productLists.forEach(list => {
-
-        if(list.id === targetId + "-products"){
-          list.classList.add("active");
-        }else{
-          list.classList.remove("active");
+      const tick = setInterval(() => {
+        val += inc;
+        if (val >= target) {
+          val = target;
+          clearInterval(tick);
         }
+        el.textContent = Math.floor(val) + suffix;
+      }, step);
 
+      observer.unobserve(el);
+    });
+  }, { threshold: 0.5 });
+
+  counters.forEach(c => observer.observe(c));
+}
+
+/* ================================================================
+   BACK TO TOP
+================================================================ */
+function initBackToTop() {
+  const btn = document.getElementById('back-to-top');
+  if (!btn) return;
+
+  window.addEventListener('scroll', () => {
+    btn.classList.toggle('visible', window.scrollY > 400);
+  }, { passive: true });
+
+  btn.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+}
+
+/* ================================================================
+   PRODUCT FILTER (products page)
+================================================================ */
+function initProductFilter() {
+  const filterBtns = document.querySelectorAll('.filter-btn');
+  const cards      = document.querySelectorAll('.product-card[data-category]');
+  if (!filterBtns.length) return;
+
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      filterBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const cat = btn.dataset.filter;
+      cards.forEach(card => {
+        const show = cat === 'all' || card.dataset.category === cat;
+        card.style.display = show ? '' : 'none';
+        if (show) {
+          card.style.animation = 'none';
+          card.offsetHeight; // reflow
+          card.style.animation = '';
+        }
       });
-
     });
-
   });
+}
 
-  dropdownToggles.forEach(toggle => {
+/* ================================================================
+   CONTACT FORM
+================================================================ */
+function initContactForm() {
+  const form = document.getElementById('contact-form');
+  if (!form) return;
 
-    toggle.addEventListener("click", function(e){
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    const btn     = form.querySelector('button[type="submit"]');
+    const success = document.getElementById('form-success');
 
-      if(window.innerWidth <= 1236){
-        e.preventDefault();
-        this.nextElementSibling.classList.toggle("show");
+    btn.disabled    = true;
+    btn.textContent = 'Sending…';
+
+    // Simulate send (replace with fetch to real endpoint)
+    setTimeout(() => {
+      btn.disabled    = false;
+      btn.textContent = 'Send Message';
+      form.reset();
+      if (success) {
+        success.style.display = 'block';
+        setTimeout(() => { success.style.display = 'none'; }, 5000);
       }
+    }, 1200);
+  });
+}
 
-    });
+/* ================================================================
+   SCROLL ANIMATIONS (fade-in on scroll)
+================================================================ */
+function initScrollAnimations() {
+  const items = document.querySelectorAll(
+    '.product-card, .blog-card, .cert-card, .update-card, .industry-card, .principle-card, .cert-page-card'
+  );
+  if (!items.length) return;
 
+  // Set initial state
+  items.forEach((el, i) => {
+    el.style.opacity    = '0';
+    el.style.transform  = 'translateY(20px)';
+    el.style.transition = `opacity .5s ease ${(i % 4) * 0.07}s, transform .5s ease ${(i % 4) * 0.07}s`;
   });
 
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity   = '1';
+        entry.target.style.transform = 'translateY(0)';
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  items.forEach(el => observer.observe(el));
 }
